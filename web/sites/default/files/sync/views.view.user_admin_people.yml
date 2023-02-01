@@ -3,6 +3,7 @@ langcode: en
 status: true
 dependencies:
   module:
+    - options
     - user
 _core:
   default_config_hash: njaZigMvB4ap21Fg_tQcJhWgYJCGNi49Z5rRL_N6RI0
@@ -784,6 +785,49 @@ display:
             default_group: All
             default_group_multiple: {  }
             group_items: {  }
+        field_activity_value:
+          id: field_activity_value
+          table: user__field_activity
+          field: field_activity_value
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: list_field
+          operator: or
+          value: {  }
+          group: 1
+          exposed: true
+          expose:
+            operator_id: field_activity_value_op
+            label: Activity
+            description: ''
+            use_operator: false
+            operator: field_activity_value_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: field_activity_value
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              content_editor: '0'
+              administrator: '0'
+            reduce: false
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          reduce_duplicates: false
       filter_groups:
         operator: AND
         groups:
