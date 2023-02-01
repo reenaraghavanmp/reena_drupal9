@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1aea8538fb9134b59ffb23842dcdd9c2",
+    "content-hash": "6dea36bdade3841626c562fd50d8c8e9",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -1536,6 +1536,66 @@
                 "GPL-2.0-or-later"
             ],
             "description": "Core and its dependencies with known-compatible minor versions. Require this project INSTEAD OF drupal/core."
+        },
+        {
+            "name": "drupal/interval",
+            "version": "1.11.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/interval.git",
+                "reference": "8.x-1.11"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/interval-8.x-1.11.zip",
+                "reference": "8.x-1.11",
+                "shasum": "0dcb9e455c62093bebf0153040dfc35e60ab7074"
+            },
+            "require": {
+                "drupal/core": "^9.1 || ^10"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "8.x-1.11",
+                    "datestamp": "1671057413",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Deciphered",
+                    "homepage": "https://www.drupal.org/user/103796"
+                },
+                {
+                    "name": "jonhattan",
+                    "homepage": "https://www.drupal.org/user/49817"
+                },
+                {
+                    "name": "larowlan",
+                    "homepage": "https://www.drupal.org/user/395439"
+                },
+                {
+                    "name": "nick_schuch",
+                    "homepage": "https://www.drupal.org/user/1412036"
+                },
+                {
+                    "name": "pcambra",
+                    "homepage": "https://www.drupal.org/user/122101"
+                }
+            ],
+            "description": "Provides a field and widget to allow entry of a date/time interval.",
+            "homepage": "https://www.drupal.org/project/interval",
+            "support": {
+                "source": "https://git.drupalcode.org/project/interval"
+            }
         },
         {
             "name": "drush/drush",

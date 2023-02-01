@@ -1,0 +1,25 @@
+uuid: 8ace51af-d9f0-4647-8543-0bbbe159d6a0
+langcode: en
+status: true
+dependencies:
+  module:
+    - reena_block_plugin
+    - system
+  theme:
+    - olivero
+id: reenablockplugin
+theme: olivero
+region: sidebar
+weight: -8
+provider: null
+plugin: reena_block_plugin
+settings:
+  id: reena_block_plugin
+  label: 'Reena Block Plugin'
+  label_display: visible
+  provider: reena_block_plugin
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '<front>'

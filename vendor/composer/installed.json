@@ -1594,6 +1594,69 @@
             "install-path": null
         },
         {
+            "name": "drupal/interval",
+            "version": "1.11.0",
+            "version_normalized": "1.11.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/interval.git",
+                "reference": "8.x-1.11"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/interval-8.x-1.11.zip",
+                "reference": "8.x-1.11",
+                "shasum": "0dcb9e455c62093bebf0153040dfc35e60ab7074"
+            },
+            "require": {
+                "drupal/core": "^9.1 || ^10"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "8.x-1.11",
+                    "datestamp": "1671057413",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Deciphered",
+                    "homepage": "https://www.drupal.org/user/103796"
+                },
+                {
+                    "name": "jonhattan",
+                    "homepage": "https://www.drupal.org/user/49817"
+                },
+                {
+                    "name": "larowlan",
+                    "homepage": "https://www.drupal.org/user/395439"
+                },
+                {
+                    "name": "nick_schuch",
+                    "homepage": "https://www.drupal.org/user/1412036"
+                },
+                {
+                    "name": "pcambra",
+                    "homepage": "https://www.drupal.org/user/122101"
+                }
+            ],
+            "description": "Provides a field and widget to allow entry of a date/time interval.",
+            "homepage": "https://www.drupal.org/project/interval",
+            "support": {
+                "source": "https://git.drupalcode.org/project/interval"
+            },
+            "install-path": "../../web/modules/contrib/interval"
+        },
+        {
             "name": "drush/drush",
             "version": "11.4.0",
             "version_normalized": "11.4.0.0",

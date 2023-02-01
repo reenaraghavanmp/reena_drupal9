@@ -1,0 +1,30 @@
+uuid: 599ec0a5-a51b-4c82-b5dc-abd1eca75b8c
+langcode: en
+status: true
+dependencies:
+  content:
+    - 'block_content:rotator:44ec99ed-b343-4fbe-97b4-00fbedbccca0'
+  module:
+    - block_content
+    - system
+  theme:
+    - olivero
+id: rotator
+theme: olivero
+region: content
+weight: -7
+provider: null
+plugin: 'block_content:44ec99ed-b343-4fbe-97b4-00fbedbccca0'
+settings:
+  id: 'block_content:44ec99ed-b343-4fbe-97b4-00fbedbccca0'
+  label: Rotator
+  label_display: visible
+  provider: block_content
+  status: true
+  info: ''
+  view_mode: full
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '<front>'

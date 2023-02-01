@@ -1,0 +1,25 @@
+uuid: b06361a6-30e4-4319-baf9-0c80ae6f3374
+langcode: en
+status: true
+dependencies:
+  module:
+    - sample_block
+    - system
+  theme:
+    - olivero
+id: sampleblock
+theme: olivero
+region: sidebar
+weight: -7
+provider: null
+plugin: sample_block
+settings:
+  id: sample_block
+  label: 'Sample Block'
+  label_display: visible
+  provider: sample_block
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '<front>'
