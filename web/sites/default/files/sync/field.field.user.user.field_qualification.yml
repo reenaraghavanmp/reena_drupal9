@@ -1,0 +1,21 @@
+uuid: e31507b4-8186-49dd-8bf9-c858cdf89bf4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_qualification
+  module:
+    - options
+    - user
+id: user.user.field_qualification
+field_name: field_qualification
+entity_type: user
+bundle: user
+label: Qualification
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
