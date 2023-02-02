@@ -1,0 +1,23 @@
+custom_route.content:
+  path: '/static-content'
+  defaults:
+    _controller: 'Drupal\custom_route\Controller\CustomRouteController::content'
+    _title: 'Static Content Page'
+  requirements:
+    _permission: 'access content'
+
+custom_route.arg_demo:
+  path: '/arg-demo/{arg}'
+  defaults:
+    _controller: 'Drupal\custom_route\Controller\CustomRouteController::content_list'
+    _title: 'Dynamic listing'
+  requirements:
+    _permission: 'access content'
+
+custom_route.list_node:
+  path: '/list/{node}'
+  defaults:
+    _controller: 'Drupal\custom_route\Controller\CustomRouteController::node_detail'
+    _title: 'Node Detail'
+  requirements:
+    _permission: 'access content'
