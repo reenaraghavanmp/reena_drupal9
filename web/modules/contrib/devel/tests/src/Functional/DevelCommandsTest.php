@@ -38,7 +38,7 @@ class DevelCommandsTest extends BrowserTestBase {
     $tokens = array_column($output, 'token');
     $this->assertContains('account-name', $tokens);
 
-    $this->drush('devel:services', [], ['format' => 'json']);
+    $this->drush('devel:Services', [], ['format' => 'json']);
     $output = $this->getOutputFromJSON();
     $this->assertContains('current_user', $output);
   }

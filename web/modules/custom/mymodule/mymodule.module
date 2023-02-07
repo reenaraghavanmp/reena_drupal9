@@ -7,11 +7,11 @@ function mymodule_form_user_register_form_alter(&$form, \Drupal\Core\Form\FormSt
   if (\Drupal::currentUser()->isAnonymous()) {
     if($form_id == "user_register_form"){
       $form['field_activity']['#access'] = FALSE;
-      $form['field_activity']['#required'] = FALSE;
+//      $form['field_activity']['#required'] = FALSE;
       $form['field_profession']['#access'] = FALSE;
-      $form['field_profession']['#required'] = FALSE;
+//      $form['field_profession']['#required'] = FALSE;
       $form['field_qualification']['#access'] = FALSE;
-      $form['field_qualification']['#required'] = FALSE;
+//      $form['field_qualification']['#required'] = FALSE;
     }
   }
 }

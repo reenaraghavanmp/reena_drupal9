@@ -53,7 +53,7 @@
  * @see \Drupal\Core\DrupalKernel::getSitePath()
  *
  * In addition to customizing application settings through variables in
- * settings.php, you can create a services.yml file in the same directory to
+ * settings.php, you can create a Services.yml file in the same directory to
  * register custom, site-specific service definitions and/or swap out default
  * implementations with custom ones.
  */
@@ -650,9 +650,9 @@ $settings['update_free_access'] = FALSE;
 # $config['system.performance']['fast_404']['html'] = '<!DOCTYPE html><html><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>The requested URL "@path" was not found on this server.</p></body></html>';
 
 /**
- * Load services definition file.
+ * Load Services definition file.
  */
-$settings['container_yamls'][] = $app_root . '/' . $site_path . '/services.yml';
+$settings['container_yamls'][] = $app_root . '/' . $site_path . '/Services.yml';
 
 /**
  * Override the default service container class.
@@ -774,7 +774,7 @@ if (file_exists(__DIR__ . '/settings.ddev.php') && getenv('IS_DDEV_PROJECT') == 
  *
  * Keep this code block at the end of this file to take full effect.
  */
-#
-# if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
-#   include $app_root . '/' . $site_path . '/settings.local.php';
-# }
+
+ if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
+  include $app_root . '/' . $site_path . '/settings.local.php';
+ }

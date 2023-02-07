@@ -165,7 +165,7 @@ devel.container_info.service:
   path: '/devel/container/service'
   defaults:
     _controller: '\Drupal\devel\Controller\ContainerInfoController::serviceList'
-    _title: 'Container services'
+    _title: 'Container Services'
   options:
     _admin_route: TRUE
   requirements:

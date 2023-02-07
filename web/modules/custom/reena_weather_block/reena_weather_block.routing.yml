@@ -1,0 +1,15 @@
+reena_weather_block.form:
+  path: '/admin/config/development/reena-weather-block'
+  defaults:
+    _form: '\Drupal\reena_weather_block\Form\WeatherAppIdForm'
+    _title: 'Weather APP ID settings'
+  requirements:
+    _permission: 'administer site configuration'
+
+reena_weather_block.custom_controller:
+  path: '/custom_controller'
+  defaults:
+    _controller: '\Drupal\reena_weather_block\Controller\CustomController::showWeather'
+  requirements:
+    _permission: 'access content'
+

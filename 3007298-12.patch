@@ -1,0 +1,98 @@
+diff --git a/core/lib/Drupal/Core/DrupalKernel.php b/core/lib/Drupal/Core/DrupalKernel.php
+index ee3b56e7bc..41aea13253 100644
+--- a/core/lib/Drupal/Core/DrupalKernel.php
++++ b/core/lib/Drupal/Core/DrupalKernel.php
+@@ -613,7 +613,7 @@ public function discoverServiceProviders() {
+       'app' => [],
+       'site' => [],
+     ];
+-    $this->serviceYamls['app']['core'] = 'core/core.services.yml';
++    $this->serviceYamls['app']['core'] = $this->getAppRoot() . '/core/core.services.yml';
+     $this->serviceProviderClasses['app']['core'] = 'Drupal\Core\CoreServiceProvider';
+ 
+     // Retrieve enabled modules and register their namespaces.
+@@ -646,7 +646,7 @@ public function discoverServiceProviders() {
+       if (class_exists($class)) {
+         $this->serviceProviderClasses['app'][$module] = $class;
+       }
+-      $filename = dirname($filename) . "/$module.services.yml";
++      $filename = $this->getAppRoot() . '/' . dirname($filename) . "/$module.services.yml";
+       if (file_exists($filename)) {
+         $this->serviceYamls['app'][$module] = $filename;
+       }
+diff --git a/core/tests/Drupal/KernelTests/Core/DrupalKernel/DrupalKernelTest.php b/core/tests/Drupal/KernelTests/Core/DrupalKernel/DrupalKernelTest.php
+index 520165edc6..44b57d83ae 100644
+--- a/core/tests/Drupal/KernelTests/Core/DrupalKernel/DrupalKernelTest.php
++++ b/core/tests/Drupal/KernelTests/Core/DrupalKernel/DrupalKernelTest.php
+@@ -62,7 +62,7 @@ protected function getTestKernel(Request $request, array $modules_enabled = NULL
+    * Tests DIC compilation.
+    */
+   public function testCompileDIC() {
+-    // @todo: write a memory based storage backend for testing.
++    // @todo write a memory based storage backend for testing.
+     $modules_enabled = [
+       'system' => 'system',
+       'user' => 'user',
+@@ -137,6 +137,14 @@ public function testCompileDIC() {
+     // does not make sense to persist the container itself.
+     $persist_ids = $container->getParameter('persist_ids');
+     $this->assertNotContains('service_container', $persist_ids);
++
++    // Test that the kernel can be compiled while in a different working
++    // directory.
++    unset($modules_enabled['service_provider_test']);
++    $cwd = getcwd();
++    chdir($kernel->getAppRoot() . '/core');
++    $kernel = $this->getTestKernel($request, $modules_enabled);
++    chdir($cwd);
+   }
+ 
+   /**
+@@ -165,7 +173,7 @@ public function testRepeatedBootWithDifferentEnvironment() {
+    * Tests setting of site path after kernel boot.
+    */
+   public function testPreventChangeOfSitePath() {
+-    // @todo: write a memory based storage backend for testing.
++    // @todo write a memory based storage backend for testing.
+     $modules_enabled = [
+       'system' => 'system',
+       'user' => 'user',
+@@ -190,6 +198,7 @@ public function testPreventChangeOfSitePath() {
+ 
+   /**
+    * Data provider for self::testClassLoaderAutoDetect.
++   *
+    * @return array
+    */
+   public function providerClassLoaderAutoDetect() {
+@@ -234,7 +243,7 @@ public function testClassLoaderAutoDetect($value) {
+     $classloader = $this->prophesize(ClassLoader::class);
+ 
+     // Assert that we call the setApcuPrefix on the classloader if
+-    // class_loader_auto_detect is set to TRUE;
++    // class_loader_auto_detect is set to TRUE;.
+     if ($value) {
+       $classloader->setApcuPrefix(Argument::type('string'))->shouldBeCalled();
+     }
+diff --git a/core/tests/Drupal/Tests/Core/DrupalKernel/DiscoverServiceProvidersTest.php b/core/tests/Drupal/Tests/Core/DrupalKernel/DiscoverServiceProvidersTest.php
+index 08ab3eb906..b52e50b191 100644
+--- a/core/tests/Drupal/Tests/Core/DrupalKernel/DiscoverServiceProvidersTest.php
++++ b/core/tests/Drupal/Tests/Core/DrupalKernel/DiscoverServiceProvidersTest.php
+@@ -33,7 +33,7 @@ public function testDiscoverServiceCustom() {
+ 
+     $expect = [
+       'app' => [
+-        'core' => 'core/core.services.yml',
++        'core' => $kernel->getAppRoot() . '/core/core.services.yml',
+       ],
+       'site' => [
+         __DIR__ . '/fixtures/custom.yml',
+@@ -55,7 +55,7 @@ public function testDiscoverServiceNoContainerYamls() {
+ 
+     $expect = [
+       'app' => [
+-        'core' => 'core/core.services.yml',
++        'core' => $kernel->getAppRoot() . '/core/core.services.yml',
+       ],
+       'site' => [],
+     ];

@@ -25,7 +25,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * __MODULE__/src/Commands, and the namespace is Drupal/__MODULE__/Commands.
  *
  * In addition to a commandfile like this one, you need to add a
- * drush.services.yml in root of your module like this module does.
+ * drush.Services.yml in root of your module like this module does.
  */
 class DevelCommands extends DrushCommands implements SiteAliasManagerAwareInterface {
 
@@ -301,20 +301,20 @@ class DevelCommands extends DrushCommands implements SiteAliasManagerAwareInterf
   }
 
   /**
-   * Get a list of available container services.
+   * Get a list of available container Services.
    *
-   * @command devel:services
+   * @command devel:Services
    *
    * @param string $prefix
    *   Optional prefix to filter the service list by.
    * @param array $options
    *   An array of options (is this used?)
    *
-   * @aliases devel-container-services,dcs,devel-services
-   * @usage drush devel-services
-   *   Gets a list of all available container services
+   * @aliases devel-container-Services,dcs,devel-Services
+   * @usage drush devel-Services
+   *   Gets a list of all available container Services
    * @usage drush dcs plugin.manager
-   *   Get all services containing "plugin.manager"
+   *   Get all Services containing "plugin.manager"
    *
    * @return array
    *   The container service ids.
@@ -331,7 +331,7 @@ class DevelCommands extends DrushCommands implements SiteAliasManagerAwareInterf
     }
 
     if (empty($services)) {
-      throw new \Exception(dt('No container services found.'));
+      throw new \Exception(dt('No container Services found.'));
     }
 
     sort($services);

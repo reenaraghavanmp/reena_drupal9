@@ -1,0 +1,5 @@
+reena_weather_block.form:
+  title: 'Weather APP ID settings'
+  description: 'Configure settings for the Reena Weather Block.'
+  route_name: 'reena_weather_block.form'
+  parent: 'system.admin_config_development'

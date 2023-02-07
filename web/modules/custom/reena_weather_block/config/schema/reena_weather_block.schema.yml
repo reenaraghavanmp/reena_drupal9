@@ -1,0 +1,9 @@
+reena_weather_block.settings:
+  type: config_object
+  label: 'Weather APP ID settings'
+  mapping:
+    reena_weather_block:
+      mapping:
+        weather_app_id_settings:
+          type: text
+          label: Weather APP ID Settings

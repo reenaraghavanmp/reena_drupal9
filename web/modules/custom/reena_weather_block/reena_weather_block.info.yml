@@ -1,0 +1,7 @@
+name: Reena Weather Block
+type: module
+description: Weather Block
+core_version_requirement: ^8 || ^9 || ^10
+package: custom
+dependencies:
+  - drupal:block

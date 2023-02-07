@@ -94,7 +94,7 @@ web_environment:
 # working_dir:
 #   web: /var/www/html
 #   db: /home
-# would set the default working directory for the web and db services.
+# would set the default working directory for the web and db Services.
 # These values specify the destination directory for ddev ssh and the
 # directory in which commands passed into ddev exec are run.
 

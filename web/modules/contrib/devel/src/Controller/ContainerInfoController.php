@@ -58,7 +58,7 @@ class ContainerInfoController extends ControllerBase implements ContainerAwareIn
   }
 
   /**
-   * Builds the services overview page.
+   * Builds the Services overview page.
    *
    * @return array
    *   A render array as expected by the renderer.
@@ -74,7 +74,7 @@ class ContainerInfoController extends ControllerBase implements ContainerAwareIn
     $rows = [];
 
     if ($container = $this->kernel->getCachedContainerDefinition()) {
-      foreach ($container['services'] as $service_id => $definition) {
+      foreach ($container['Services'] as $service_id => $definition) {
         $service = unserialize($definition);
 
         $row['id'] = [
@@ -113,14 +113,14 @@ class ContainerInfoController extends ControllerBase implements ContainerAwareIn
       ksort($rows);
     }
 
-    $output['services'] = [
+    $output['Services'] = [
       '#type' => 'devel_table_filter',
       '#filter_label' => $this->t('Search'),
       '#filter_placeholder' => $this->t('Enter service id, alias or class'),
       '#filter_description' => $this->t('Enter a part of the service id, service alias or class to filter by.'),
       '#header' => $headers,
       '#rows' => $rows,
-      '#empty' => $this->t('No services found.'),
+      '#empty' => $this->t('No Services found.'),
       '#sticky' => TRUE,
       '#attributes' => [
         'class' => ['devel-service-list'],
@@ -153,8 +153,8 @@ class ContainerInfoController extends ControllerBase implements ContainerAwareIn
     if ($cached_definitions = $this->kernel->getCachedContainerDefinition()) {
       // Tries to retrieve the service definition from the kernel's cached
       // container definition.
-      if (isset($cached_definitions['services'][$service_id])) {
-        $definition = unserialize($cached_definitions['services'][$service_id]);
+      if (isset($cached_definitions['Services'][$service_id])) {
+        $definition = unserialize($cached_definitions['Services'][$service_id]);
 
         // If the service has an alias add it to the definition.
         if ($alias = array_search($service_id, $cached_definitions['aliases'])) {

@@ -1,0 +1,3 @@
+services:
+  reena_weather_block.custom_get_service:
+    class: Drupal\reena_weather_block\CustomGetServices

@@ -34,7 +34,7 @@ class DevelContainerInfoTest extends DevelBrowserTestBase {
     $this->clickLink('Container Info');
     $this->assertSession()->statusCodeEquals(200);
     $this->assertSession()->addressEquals('/devel/container/service');
-    $this->assertSession()->pageTextContains('Container services');
+    $this->assertSession()->pageTextContains('Container Services');
   }
 
   /**
@@ -43,12 +43,12 @@ class DevelContainerInfoTest extends DevelBrowserTestBase {
   public function testServiceList() {
     $this->drupalGet('/devel/container/service');
     $this->assertSession()->statusCodeEquals(200);
-    $this->assertSession()->pageTextContains('Container services');
+    $this->assertSession()->pageTextContains('Container Services');
     $this->assertContainerInfoLocalTasks();
 
     $page = $this->getSession()->getPage();
 
-    // Ensures that the services table is found.
+    // Ensures that the Services table is found.
     $table = $page->find('css', 'table.devel-service-list');
     $this->assertNotNull($table);
 
@@ -63,13 +63,13 @@ class DevelContainerInfoTest extends DevelBrowserTestBase {
     }, $headers);
     $this->assertSame($expected_headers, $actual_headers);
 
-    // Ensures that all the services are listed in the table.
+    // Ensures that all the Services are listed in the table.
     $cached_definition = \Drupal::service('kernel')->getCachedContainerDefinition();
     $this->assertNotNull($cached_definition);
     $rows = $table->findAll('css', 'tbody tr');
-    $this->assertEquals(count($cached_definition['services']), count($rows));
+    $this->assertEquals(count($cached_definition['Services']), count($rows));
 
-    // Tests the presence of some (arbitrarily chosen) services in the table.
+    // Tests the presence of some (arbitrarily chosen) Services in the table.
     $expected_services = [
 // Alias changed in Drupal 10 so commented out the test for now.
 //      'config.factory' => [

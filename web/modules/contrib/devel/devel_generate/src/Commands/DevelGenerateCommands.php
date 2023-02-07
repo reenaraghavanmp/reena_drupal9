@@ -13,7 +13,7 @@ use Drush\Commands\DrushCommands;
  * __MODULE__/src/Commands, and the namespace is Drupal/__MODULE__/Commands.
  *
  * In addition to a commandfile like this one, you need to add a
- * drush.services.yml in the root of your module like this module does.
+ * drush.Services.yml in the root of your module like this module does.
  *
  * Note: Integer values for defaults need to be in quotes, otherwise they can
  * match with numeric constants such as InputOption::VALUE_OPTIONAL in
