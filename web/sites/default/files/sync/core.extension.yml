@@ -38,8 +38,10 @@ module:
   path_alias: 0
   rdf: 0
   reena_block_plugin: 0
+  reena_weather_block: 0
   sample_block: 0
   search: 0
+  search_kint: 0
   shortcut: 0
   system: 0
   taxonomy: 0

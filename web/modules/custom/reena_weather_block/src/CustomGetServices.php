@@ -10,7 +10,7 @@ namespace Drupal\reena_weather_block;
  */
 class CustomGetServices {
   public function getWeatherData() {
-   
+
     $city = "Mumbai";
     $app_id = "2b5e8fc2e9331f6a81bd755273b69037";
     $url = "https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$app_id";

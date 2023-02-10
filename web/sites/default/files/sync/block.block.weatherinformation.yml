@@ -1,0 +1,25 @@
+uuid: 884d927a-d4f0-4175-9ce7-bfa2feea5adf
+langcode: en
+status: true
+dependencies:
+  module:
+    - reena_weather_block
+    - system
+  theme:
+    - olivero
+id: weatherinformation
+theme: olivero
+region: sidebar
+weight: 0
+provider: null
+plugin: reena_custom_weather_block
+settings:
+  id: reena_custom_weather_block
+  label: 'Weather Information'
+  label_display: visible
+  provider: reena_weather_block
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '<front>'
