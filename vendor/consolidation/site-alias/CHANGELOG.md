@@ -1,9 +1,8 @@
 # Changelog
 
-### 4.0.0 2022-10-13
+### 3.1.7 2022-10-14
 
-* Create 4.x branch for breaking changes introduced in 3.1.6 so that they may be backed out on the 3.x branch.
-* Drop support for older versions of PHP and Symfony.
+* Resume use of webmozat/path-utils for compatibility with Symfony 4.x. (#59)
 
 ### 3.1.6 2022-10-11
 

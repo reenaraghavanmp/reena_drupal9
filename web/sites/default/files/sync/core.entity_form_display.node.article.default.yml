@@ -6,6 +6,7 @@ dependencies:
     - field.field.node.article.body
     - field.field.node.article.comment
     - field.field.node.article.field_image
+    - field.field.node.article.field_magic_text
     - field.field.node.article.field_rotator
     - field.field.node.article.field_tags
     - image.style.thumbnail
@@ -14,6 +15,7 @@ dependencies:
     - comment
     - image
     - path
+    - reena_field_plugin
     - text
 _core:
   default_config_hash: Pzq9mzrsfoPf775qgEU_SUbHSro9pv1ga-Euh1Ykd_k
@@ -51,6 +53,12 @@ content:
     settings:
       progress_indicator: throbber
       preview_image_style: thumbnail
+    third_party_settings: {  }
+  field_magic_text:
+    type: magictext_widget
+    weight: 122
+    region: content
+    settings: {  }
     third_party_settings: {  }
   field_rotator:
     type: options_select

@@ -1,0 +1,19 @@
+uuid: 765fe4a9-1faf-4598-ad81-ce0f162e0d73
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - reena_field_plugin
+id: node.field_magic_text
+field_name: field_magic_text
+entity_type: node
+type: magictext_type
+settings: {  }
+module: reena_field_plugin
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

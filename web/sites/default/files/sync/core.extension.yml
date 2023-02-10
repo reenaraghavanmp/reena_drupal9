@@ -38,6 +38,7 @@ module:
   path_alias: 0
   rdf: 0
   reena_block_plugin: 0
+  reena_field_plugin: 0
   reena_weather_block: 0
   sample_block: 0
   search: 0
