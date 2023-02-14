@@ -1,0 +1,912 @@
+<?php
+
+/**
+ * @file
+ * Implements the principal entry points and hooks for the module.
+ *
+ * @defgroup formatter_suite Formatter Suite
+ *
+ * @{
+ * This module provides a variety of general-purpose field formatters.
+ * @}
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+use Drupal\formatter_suite\Branding;
+
+/*----------------------------------------------------------------------
+ *
+ * Handle theme hooks.
+ *
+ *----------------------------------------------------------------------*/
+/**
+ * Implements hook_theme().
+ */
+function formatter_suite_theme() {
+  $themes = [];
+
+  //
+  // Field list theme.
+  // -----------------
+  // Copy the generic field theme to be a field list.
+  $commonThemes = drupal_common_theme();
+  $themes['formatter_suite_field_list'] = $commonThemes['field'];
+
+  //
+  // General image theme.
+  // --------------------
+  // The general image formatter swaps out the Image module's
+  // 'image_formatter' for its own that uses a slightly better theme
+  // that includes URL attributes.
+  $themes['formatter_suite_general_image_formatter'] = [
+    'variables' => [
+      'item'            => NULL,
+      'item_attributes' => NULL,
+      'url'             => NULL,
+      'attributes'      => NULL,
+      'image_style'     => NULL,
+    ],
+  ];
+
+  //
+  // Image embed themes.
+  // -------------------
+  // The image embedding formatter needs to define three themes that
+  // mimic standard Drupal themes when the formatter is used:
+  //
+  // - 'formatter_suite_image' mimics the Drupal core 'image' theme.
+  //
+  // - 'formatter_suite_image_style' mimics the image module's
+  //   'image_style' theme.
+  //
+  // - 'formatter_suite_image_formatter' mimics the image module's
+  //   'image_formatter' theme.
+  //
+  // This module defines TWIG templates that are copies of the original
+  // themes so that we get the same layout.
+  //
+  // Since we want to mimic the original themes, we need the same set of
+  // variables. These variable definitions are copied from the originals,
+  // then augmented with additional variables needed for embedding.
+  //
+  // Get theme descriptions from Drupal core and the image module.
+  $commonThemes = drupal_common_theme();
+  $imageModuleThemes = image_theme();
+
+  // Image embed themes.
+  //
+  // Copy theme variable definitions, then add variables for the minimum
+  // and maximum image embed width.
+  $themes['formatter_suite_image_embed'] =
+    $commonThemes['image'];
+  $themes['formatter_suite_image_embed_style'] =
+    $imageModuleThemes['image_style'];
+  $themes['formatter_suite_image_embed_formatter'] =
+    $imageModuleThemes['image_formatter'];
+
+  foreach (['image_embed', 'image_embed_style', 'image_embed_formatter'] as $key) {
+    $th = 'formatter_suite_' . $key;
+    $themes[$th]['variables']['maximumEmbedWidth'] = 0;
+    $themes[$th]['variables']['maximumEmbedHeight'] = 0;
+  }
+
+  //
+  // Patch image formatter-based themes.
+  // -----------------------------------
+  // Above we've copied the Image module's 'image_formatter' theme
+  // description. Unfortunately, this includes a 'file' field that directs
+  // the theme manager to include the Image module's 'image.field.inc'
+  // where the template's preprocessor function lives. The theme manager
+  // always assumes that the path in a 'file' field is relative to the
+  // module involved, which is us, not the Image module. This causes the
+  // Image module's 'image.field.inc' to not be found, which means its
+  // preprocess function isn't found.
+  //
+  // The fix is this:
+  //
+  // 1. Remove the 'file' field from the theme description.
+  // 2. Handle template preprocessing ourselves.
+  unset($themes['formatter_suite_image_embed_formatter']['file']);
+
+  return $themes;
+}
+
+/**
+ * Prepares variables for field list template.
+ *
+ * This template is used by this module's field list formatters and the
+ * the 'formatter_suite_field_list' template. The template's job is
+ * to format a list of fields using a selected list style and with
+ * selected list separators between the items.
+ *
+ * Template processing uses the core field
+ * output image width and height and uses them in the output variables.
+ *
+ * @param array $variables
+ *   Returns an associative array of theme variables.
+ */
+function template_preprocess_formatter_suite_field_list(
+  array &$variables,
+  $hook) {
+
+  $element = $variables['element'];
+  template_preprocess_field($variables, $hook);
+  $variables['list_style'] = $element['#list_style'];
+  $variables['list_separator'] = $element['#list_separator'];
+}
+
+/**
+ * Prepares variables for image embed formatter template.
+ *
+ * This template is used by this module's ImageInlineFormatter to enable
+ * embedding images directly on a page by using a data URL. Processing
+ * swaps out the image module's 'image_formatter' theme for this module's
+ * 'formatter_suite_image_formatter'. This template preprocessor then
+ * sets up the image in a way nearly identical to the parent class, but
+ * with support for data URL handling.
+ *
+ * Incoming variables:
+ *   - 'item':  an ImageItem object.
+ *   - 'item_attributes':  (optional) an associative array of html attributes
+ *     to be placed in the <img> tag.
+ *   - 'image_style':  (optional) the name of an image style.
+ *   - 'url':  (optional) a \Drupal\Core\Url object for linking the image to
+ *     another entity or file.
+ *   - 'maximumEmbedWidth': (optional) the maximum width for embedding
+ *     as a data URL.
+ *   - 'maximumEmbedHEight': (optional) the maximum height for embedding
+ *     as a data URL.
+ *
+ * Outgoing variables include the above items, plus:
+ *   - 'image':  a theme-ready image description.
+ *     - '#theme':  the name of the theme to use.
+ *     - '#attributes':  a copy of 'item_attributes'.
+ *     - '#width':  the original image width.
+ *     - '#height':  the original image height.
+ *     - '#alt':  the image's alternative text.
+ *     - '#style_name':  (optional) the name of an image style.
+ *     - '#title':  (optional) an image title.
+ *     - '#uri':  the URI of the item or file.
+ *     - '#maximumEmbedWidth': (optional) a copy of 'maximumEmbedWidth'.
+ *     - '#maximumEmbedHeight': (optional) a copy of 'maximumEmbedHeight'.
+ *
+ * The theme name will be one of:
+ *   - 'image' if the image does not have a style.
+ *   - 'formatter_suite_image_style' if the image does have a style.
+ *
+ * Note that the 'width' and 'height' are for the original image, not
+ * for the styled image.
+ *
+ * Compared to the base class's template_preprocess_image_formatter(),
+ * this function primarily insures that the maximum embed width/height
+ * variables are passed onwards to the customized theme templates that
+ * actually do the embedding.
+ *
+ * Default template: formatter-suite-image-embed-formatter.html.twig.
+ *
+ * @param array $variables
+ *   Returns an associative array of theme variables.
+ */
+function template_preprocess_formatter_suite_image_embed_formatter(
+  array &$variables) {
+
+  // The following code is based upon the image module's
+  // template_preprocess_image_formatter() function to process the
+  // image_formatter template.
+  //
+  // Changes include redirecting to this module's image embed templates,
+  // instead of that for the image module, and adding the maximum embed
+  // dimensions.
+  if (empty($variables['image_style']) === FALSE) {
+    // An image style is defined. Set up an image that redirects to
+    // our image_style template. Forward the name of the style.
+    $variables['image'] = [
+      '#theme'      => 'formatter_suite_image_embed_style',
+      '#style_name' => $variables['image_style'],
+    ];
+  }
+  else {
+    // No image style is defined. Use the stock Drupal core template.
+    $variables['image'] = [
+      '#theme' => 'formatter_suite_image_embed',
+    ];
+  }
+
+  // Copy down the item's attributes.
+  $variables['image']['#attributes'] = $variables['item_attributes'];
+  if (isset($variables['maximumEmbedWidth']) === TRUE) {
+    $variables['image']['#maximumEmbedWidth'] = $variables['maximumEmbedWidth'];
+  }
+
+  if (isset($variables['maximumEmbedHeight']) === TRUE) {
+    $variables['image']['#maximumEmbedHeight'] = $variables['maximumEmbedHeight'];
+  }
+
+  // Get the item being formatted.
+  $item = $variables['item'];
+
+  // Do not output an empty 'title' attribute.
+  if (mb_strlen($item->title) !== 0) {
+    $variables['image']['#title'] = $item->title;
+  }
+
+  // Get the URI.
+  if (($entity = $item->entity) !== NULL &&
+      empty($item->uri) === TRUE) {
+    $variables['image']['#uri'] = $entity->getFileUri();
+  }
+  else {
+    $variables['image']['#uri'] = $item->uri;
+  }
+
+  // Add basic image attributes.
+  foreach (['width', 'height', 'alt'] as $key) {
+    $variables['image']["#$key"] = $item->$key;
+  }
+}
+
+/**
+ * Prepares variables for image embed template.
+ *
+ * This template is used by this module's ImageInlineFormatter by way of
+ * the 'formatter_suite_image_embed_formatter' template. The template's job is
+ * to compare the image width and height to any limits imposed by the
+ * formatter, and then optionally embed the styled image as a data URL
+ * instead of as a file URL.
+ *
+ * Incoming variables:
+ *   - 'theme':  the name of the theme to use.
+ *   - 'attributes':  a copy of 'item_attributes'.
+ *   - 'width':  the original image width.
+ *   - 'height':  the original image height.
+ *   - 'alt':  the image's alternative text.
+ *   - 'title':  (optional) an image title.
+ *   - 'uri':  the URI of the item or file.
+ *   - 'maximumEmbedWidth': (optional) a copy of 'maximumEmbedWidth'.
+ *   - 'maximumEmbedHeight': (optional) a copy of 'maximumEmbedHeight'.
+ *
+ * Outgoing variables include the above plus:
+ *   - 'attributes':  a copy of 'attributes'.
+ *   - 'width':  the styled image width.
+ *   - 'height':  the styled image height.
+ *   - 'alt':  the image's alternative text.
+ *   - 'title':  (optional) an image title.
+ *   - 'sizes':  (optional) a list of sizes for responsive images, if the
+ *     image could not be embedded as a data URL.
+ *   - 'srcset':  (optional) a list of responsive images, if the image could
+ *     note be embedded as a data URL.
+ *   - '#uri':  (optional) the URI of the original image if it could not
+ *     be embedded as a data URL.
+ *
+ * Compared to the Drupal core template_preprocess_image(), this
+ * function checks if a image is within the maximum embed width/height
+ * limits and attempts to load the image to create a data URL. If the image
+ * cannot be found, a file URL is used.
+ *
+ * Default template: formatter-suite-image-embed-style.html.twig.
+ *
+ * @param array $variables
+ *   Returns an associative array of theme variables.
+ */
+function template_preprocess_formatter_suite_image_embed(
+  array &$variables) {
+
+  // Invoke Drupal core to process variables. This sets up variables with
+  // the image width, height, title, etc.
+  template_preprocess_image($variables);
+
+  // Check that the image is within our embedding bounds.
+  $maximumEmbedWidth = (int) $variables['maximumEmbedWidth'];
+  $maximumEmbedHeight = (int) $variables['maximumEmbedHeight'];
+  $width = (int) $variables['width'];
+  $height = (int) $variables['height'];
+
+  if (($maximumEmbedWidth > 0 && $width > $maximumEmbedWidth) ||
+      ($maximumEmbedHeight > 0 && $height > $maximumEmbedHeight)) {
+    // The styled image is too large for embedding. The parent class has
+    // already set things up to use a file URL. Leave things that way.
+    return;
+  }
+
+  // Get the real path to the image.
+  if (empty($variables['uri']) === FALSE) {
+    $originalUri = $variables['uri'];
+  }
+  elseif (empty($variables['src']) === FALSE) {
+    $originalUri = $variables['src'];
+  }
+  else {
+    // Cannot find URI for image. Fall back to whatever the original theme
+    // was going to do.
+    return;
+  }
+
+  $fileSystem = \Drupal::service('file_system');
+  $path = $fileSystem->realpath($originalUri);
+  if ($path === FALSE || @file_exists($path) === FALSE) {
+    // The file does not exist. Curious. Fall back to whatever Drupal core
+    // set up for the template.
+    return;
+  }
+
+  // Get the file's MIME type. We need this for the data URL.
+  $mimeType = \Drupal::service('file.mime_type.guesser')->guess($path);
+
+  // Read the file's raw bytes and base64 encode them as a data URL.
+  $data = file_get_contents($path);
+  $dataUrl = 'data:' . $mimeType . ';base64,' . base64_encode($data);
+
+  // Set the image's source to be the data URL. To prevent this from
+  // being overwritten with the image's URI, delete that URI from the
+  // variables. Delete the srcset and sizes too, if present.
+  $variables['attributes']['src'] = $dataUrl;
+  unset($variables['uri']);
+  unset($variables['srcset']);
+  unset($variables['sizes']);
+}
+
+/**
+ * Prepares variables for image embed style template.
+ *
+ * This template is used by this module's ImageEmbedDataFormatter by way of
+ * the 'formatter_suite_image_embed_formatter' template. The template's job is
+ * to look up the image style, compare the styled image width and height to
+ * any limits imposed by the formatter, and then optionally embed the
+ * styled image as a data URL instead of as a file URL.
+ *
+ * Incoming variables:
+ *   - 'theme':  the name of the theme to use.
+ *   - 'attributes':  a copy of 'item_attributes'.
+ *   - 'width':  the original image width.
+ *   - 'height':  the original image height.
+ *   - 'alt':  the image's alternative text.
+ *   - 'style_name':  (optional) the name of an image style.
+ *   - 'title':  (optional) an image title.
+ *   - 'uri':  the URI of the item or file.
+ *   - 'maximumEmbedWidth': (optional) a copy of 'maximumEmbedWidth'.
+ *   - 'maximumEmbedHeight': (optional) a copy of 'maximumEmbedHeight'.
+ *
+ * Outgoing variables include the above plus:
+ *   - 'image':  a theme-ready image description.
+ *     - '#theme':  the name of the theme to use (always 'image').
+ *     - '#attributes':  a copy of 'attributes'.
+ *     - '#width':  the styled image width.
+ *     - '#height':  the styled image height.
+ *     - '#alt':  the image's alternative text.
+ *     - '#style_name':  (optional) the name of an image style.
+ *     - '#title':  (optional) an image title.
+ *     - '#uri':  (optional) the URI of the styled or original image if it
+ *       could not be embedded as a data URL.
+ *
+ * Template processing loads the named style and computes the style's
+ * output image width and height and uses them in the output variables.
+ *
+ * Compared to the parent class's template_preprocess_image_style(), this
+ * function checks if a styled image is within the maximum embed width/height
+ * limits and attempts to load the image to create a data URL. If the image
+ * is not available yet (such as a styled image that hasn't been created and
+ * cached yet), a file URL is used.
+ *
+ * Default template: formatter-suite-image-embed-style.html.twig.
+ *
+ * @param array $variables
+ *   Returns an associative array of theme variables.
+ */
+function template_preprocess_formatter_suite_image_embed_style(
+  array &$variables) {
+
+  // Invoke the image module to process variables. This sets up the 'image'
+  // variable with the image's styled width and height, style, title, and
+  // URL for links. It also includes a URI for the source image.
+  template_preprocess_image_style($variables);
+
+  // Check that the styled image is within our embedding bounds.
+  $maximumEmbedWidth = (int) $variables['maximumEmbedWidth'];
+  $maximumEmbedHeight = (int) $variables['maximumEmbedHeight'];
+  $width = (int) $variables['image']['#width'];
+  $height = (int) $variables['image']['#height'];
+
+  if (($maximumEmbedWidth > 0 && $width > $maximumEmbedWidth) ||
+      ($maximumEmbedHeight > 0 && $height > $maximumEmbedHeight)) {
+    // The styled image is too large for embedding. The parent class has
+    // already set things up to use a file URL. Leave things that way.
+    return;
+  }
+
+  // Get the image style and validate.
+  //
+  // We explicitly load the style without referring to the "ImageStyle" class
+  // so that this code doesn't depend upon that class. This enables the module
+  // to be used even when the Image module is not installed (though this
+  // function won't be called in that case).
+  $sourceUri = $variables['uri'];
+  $entityTypeManager = \Drupal::service("entity_type.manager");
+  $storage = $entityTypeManager->getStorage('image_style');
+  if ($storage === NULL) {
+    // The ImageStyle entity type is NOT defined, so the Image module is
+    // installed. Without the module, there are no image fields and no
+    // opportunities to use this module's image field formatters. And that
+    // means no calls to this code. BUT, just in case, let whatever other
+    // preprocessors have done continue.
+    return;
+  }
+
+  $style = $storage->load($variables['style_name']);
+  if ($style === NULL || $style->supportsUri($sourceUri) === FALSE) {
+    // Either the style won't load or the image at hand is not supported
+    // by the style (or the underlying image toolkit). In this case, there
+    // is no styled image and the parent class has already set up theme
+    // variables to point to the original image. Leave things that way.
+    return;
+  }
+
+  // Get the URI of the styled image.
+  $styledUri = $style->buildUri($sourceUri);
+
+  // Get the real path to the styled image.
+  $fileSystem = \Drupal::service('file_system');
+  $path = $fileSystem->realpath($styledUri);
+  if ($path === FALSE || @file_exists($path) === FALSE) {
+    // The file does not exist yet. The image module only creates and caches
+    // styled images on the first use, so this image hasn't been used yet.
+    //
+    // The parent class has already set things up to use a file URL that will
+    // trigger creation of the styled image. Leave things that way.
+    //
+    // On the NEXT use of this image, the file will exist and we can
+    // embed it.
+    return;
+  }
+
+  // Get the file's MIME type. We need this for the data URL.
+  //
+  // Styling can change the file format of the image, which changes its
+  // MIME type. So we need to query the MIME type of the styled image
+  // instead of using whatever is saved in the image object.
+  $mimeType = \Drupal::service('file.mime_type.guesser')->guess($path);
+
+  // Read the file's raw bytes and base64 encode them as a data URL.
+  $data = file_get_contents($path);
+  $dataUrl = 'data:' . $mimeType . ';base64,' . base64_encode($data);
+
+  // Set the image's source to be the data URL. To prevent this from
+  // being overwritten with the image's URI, delete that URI from the
+  // variables.
+  $variables['image']['#attributes']['src'] = $dataUrl;
+  unset($variables['image']['#uri']);
+}
+
+/**
+ * Prepares variables for general image formatter template.
+ *
+ * This template is used by this module's GeneralImageFormatter to add
+ * captions and link attributes to images. Processing swaps out the
+ * image module's 'image_formatter' theme for this module's
+ * 'formatter_suite_general_image_formatter'. This template preprocessor then
+ * sets up the image in a way nearly identical to the parent class, but
+ * with URL attributes.
+ *
+ * Incoming variables:
+ *   - 'item':  an ImageItem object.
+ *   - 'item_attributes':  (optional) an associative array of html attributes
+ *     to be placed in the <img> tag.
+ *   - 'image_style':  (optional) the name of an image style.
+ *   - 'url':  (optional) a \Drupal\Core\Url object for linking the image to
+ *     another entity or file.
+ *   - 'url_attributes': (optional) attributes for the image link, if any.
+ *
+ * Outgoing variables include the above items, plus:
+ *   - 'image':  a theme-ready image description.
+ *     - '#theme':  the name of the theme to use.
+ *     - '#attributes':  a copy of 'item_attributes'.
+ *     - '#width':  the original image width.
+ *     - '#height':  the original image height.
+ *     - '#alt':  the image's alternative text.
+ *     - '#style_name':  (optional) the name of an image style.
+ *     - '#title':  (optional) an image title.
+ *     - '#uri':  the URI of the item or file.
+ *     - '#maximumEmbedWidth': (optional) a copy of 'maximumEmbedWidth'.
+ *     - '#maximumEmbedHeight': (optional) a copy of 'maximumEmbedHeight'.
+ *
+ * The theme name will be one of:
+ *   - 'image' if the image does not have a style.
+ *   - 'image_style' if the image does have a style.
+ *
+ * Note that the 'width' and 'height' are for the original image, not
+ * for the styled image.
+ *
+ * Compared to the base class's template_preprocess_image_formatter(),
+ * this function just adds URL attributes.
+ *
+ * Default template: formatter-suite-general-image-formatter.html.twig.
+ *
+ * @param array $variables
+ *   Returns an associative array of theme variables.
+ */
+function template_preprocess_formatter_suite_general_image_formatter(
+  array &$variables) {
+
+  //
+  // Mimic image module.
+  // -------------------
+  // Repeat the image module's template_preprocess_image_formatter() function.
+  if (empty($variables['image_style']) === FALSE) {
+    // An image style is defined.
+    $variables['image'] = [
+      '#theme'      => 'image_style',
+      '#style_name' => $variables['image_style'],
+    ];
+  }
+  else {
+    // No image style is defined. Use the stock Drupal core template.
+    $variables['image'] = [
+      '#theme' => 'image',
+    ];
+  }
+
+  // Copy down the item's attributes.
+  $variables['image']['#attributes'] = $variables['item_attributes'];
+
+  // Get the item being formatted.
+  $item = $variables['item'];
+
+  // Do not output an empty 'title' attribute.
+  if (mb_strlen($item->title) !== 0) {
+    $variables['image']['#title'] = $item->title;
+  }
+
+  // Get the URI.
+  if (($entity = $item->entity) !== NULL &&
+      empty($item->uri) === TRUE) {
+    $variables['image']['#uri'] = $entity->getFileUri();
+  }
+  else {
+    $variables['image']['#uri'] = $item->uri;
+  }
+
+  // Add basic image attributes.
+  foreach (['width', 'height', 'alt'] as $key) {
+    $variables['image']["#$key"] = $item->$key;
+  }
+
+}
+
+/*----------------------------------------------------------------------
+ *
+ * Handle module help.
+ *
+ *----------------------------------------------------------------------*/
+/**
+ * Implements hook_help().
+ *
+ * This function responds to the help route for the Formatter Suite module
+ * and provides a single page with multiple sections to document the
+ * purpose and uses of the module.
+ */
+function formatter_suite_help(
+  string $routeName,
+  RouteMatchInterface $routeMatch) {
+  //
+  // The function returns a render array containing multiple help sections,
+  // partly mandated by Drupal best practices.
+  //
+  // Check the route.
+  if ($routeName !== 'help.page.formatter_suite') {
+    // The route is not part of our help page. Do nothing.
+    return;
+  }
+
+  // Get module information.
+  $moduleTitle = \Drupal::moduleHandler()->getName('formatter_suite');
+  $imagePath = '/' . drupal_get_path('module', 'formatter_suite') . '/images/';
+
+  //
+  // About
+  // -----
+  // This section is recommended by Drupal best practices.
+  $help = '';
+  $help .= '<h4>' . t('About') . '</h4>';
+  $help .= '<p>' . t(
+    '<strong>@moduleTitle</strong> provides a suite of field formatters to help present numbers, dates, times, text, links, entity references, files, and images. This module contains the following formatters, organized by the field types they support.',
+    [
+      '@moduleTitle' => $moduleTitle,
+    ]) . '</p>';
+
+  $help .= <<<EOS
+<ul class="formatter_suite-toc">
+  <li>Date & time<ul>
+    <li><a href="#DateTimeList">Date & time list</a></li>
+    <li><a href="#DateTimeCustomList">Custom date & time list</a></li>
+    <li><a href="#DateTimeTimeAgoList">Time ago list</a></li>
+  </ul></li>
+  <li>Email<ul>
+    <li><a href="#GeneralEmail">General email address</a></li>
+  </ul></li>
+  <li>Entity reference<ul>
+    <li><a href="#GeneralEntityReference">General entity reference</a></li>
+    <li><a href="#GeneralUserReference">General user reference</a></li>
+    <li><a href="#EntityReferenceRenderList">Rendered entity list</a></li>
+  </ul></li>
+  <li>Files<ul>
+    <li><a href="#GeneralFileLink">General file link</a></li>
+  </ul></li>
+  <li>Images<ul>
+    <li><a href="#GeneralImage">General image</a></li>
+    <li><a href="#ImageEmbedData">Image with embeded data URL</a></li>
+  </ul></li>
+  <li>Links<ul>
+    <li><a href="#GeneralLink">General link</a></li>
+  </ul></li>
+  <li>Numbers (Decimal, Float, and Integer)<ul>
+    <li><a href="#NumberWithBytes">Bytes with KB/MB/GB suffix</a></li>
+    <li><a href="#GeneralNumber">General number</a></li>
+    <li><a href="#GeneralNumberWithBarIndicator">General number with bar indicator</a></li>
+    <li><a href="#GeneralNumberWithMinMax">General number with min/max</a></li>
+  </ul></li>
+  <li>Text (String long, Text, Text long, and Text with Summary)<ul>
+    <li><a href="#TextWithExpandCollapseButtons">Text with expand/collapse buttons</a></li>
+  </ul></li>
+  <li>Timestamp<ul>
+    <li><a href="#TimestampList">Timestamp list</a></li>
+    <li><a href="#TimestampTimeAgoList">Time ago list</a></li>
+  </ul></li>
+</ul>
+EOS;
+
+  //
+  // Uses
+  // ----
+  // This section is recommended by Drupal best practices.
+  $help .= '<h4>' . t('Uses') . '</h4>';
+  $help .= '<p>' . t(
+    "Web site adminstrators may use the <strong>@moduleTitle</strong> module, and its submodules, along with the core <strong>Field UI</strong> and <strong>View UI</strong> modules, to configure the way in which field data is presented.",
+    [
+      '@moduleTitle' => $moduleTitle,
+    ]) . '</p>';
+  $help .= '<p>' . t(
+    "Collectively, the <strong>@moduleTitle</strong> modules offer a rich set of features that go beyond core formatters to provide detailed control over number notation styles, email address links, dates and times, images, files, and more. Special formatters add graphic indicators, large text collapse & expand, and more.",
+    [
+      '@moduleTitle' => $moduleTitle,
+    ]) . '</p>';
+
+  //
+  // Formatters
+  // ----------
+  // List the formatters.
+  //
+  // Datetime.
+  $help .= '<h4>' . t('Formatters for dates and times') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="DateTimeList"></a>';
+  $help .= '<dt>' . t('Date & time list') . '</dt>';
+  $image = '<img src="' . $imagePath . 'DateTimeList.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Date & Time field.') . '</em></dd>';
+  $help .= '<dd>' . t("Settings select the time zone and one of the site's configured date formats.") . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="DateTimeCustomList"></a>';
+  $help .= '<dt>' . t('Custom date & time list') . '</dt>';
+  $image = '<img src="' . $imagePath . 'DateTimeCustomList.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Date & Time field.') . '</em></dd>';
+  $help .= '<dd>' . t("Settings select the time zone and a custom date and time format based upon PHP's format codes.") . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="DateTimeTimeAgoCustomList"></a>';
+  $help .= '<dt>' . t('Time ago list') . '</dt>';
+  $image = '<img src="' . $imagePath . 'DateTimeTimeAgoList.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Date & Time field.') . '</em></dd>';
+  $help .= '<dd>' . t("Settings select how to annotate times that are in the future or the past, and the amount of detail to show.") . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  $help .= '</dl>';
+
+  //
+  // Email address.
+  $help .= '<h4>' . t('Formatters for email addresses') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralEmail"></a>';
+  $help .= '<dt>' . t('General email address') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralEmail.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Email field.') . '</em></dd>';
+  $help .= '<dd>' . t('Settings select whether to display an email address as plain text, as the address with a "mailto" link, or as a mailto link with custom text, such as "Email me" or "Contact us". Mailto links typically cause a web browser to start up the user\'s email application when clicked.') . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  $help .= '</dl>';
+
+  // Entity references.
+  $help .= '<h4>' . t('Formatters for entity references') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralEntityReference"></a>';
+  $help .= '<dt>' . t('General entity reference') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralEntityReference.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Entity Reference field, including for Files, Images, Taxonomy terms, and Users.') . '</em></dd>';
+  $help .= '<dd>' . t('A general-purpose formatter for entity reference fields for entities of any type, including those for files, images, taxonomy terms, and user accounts.') . '</dd>';
+  $help .= '<dd>' . t("Settings select whether to display the referenced entity's ID, title, creation date, title and date, other combinations, or custom text with token replacement, and how to link to the entity's content. HTML5 link features are available to cause the link to open in a new tab/window or trigger a file download, and to mark the linked content using standard semantic values, such as author, help, or license information.") . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralUserReference"></a>';
+  $help .= '<dt>' . t('General user reference') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralUserReference.png">';
+  $help .= '<dd><em>' . $image . t('Supports: User Reference fields.') . '</em></dd>';
+  $help .= '<dd>' . t('A general-purpose formatter for user reference fields such as for node authors and file owners.') . '</dd>';
+  $help .= '<dd>' . t("Settings select whether to display the referenced user's ID, account name, display name, last-login date, account name and ID, other combinations, or custom text with token replacement, and how to link to the entity's content. HTML5 link features are available to cause the link to open in a new tab/window or trigger a file download, and to mark the linked user using standard semantic values, such as an author.") . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="EntityReferenceRenderList"></a>';
+  $help .= '<dt>' . t('Rendered entity list') . '</dt>';
+  $image = '<img src="' . $imagePath . 'EntityReferenceRenderList.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Entity Reference field, including for Files, Images, Users, and Taxonomy terms.') . '</em></dd>';
+  $help .= '<dd>' . t('A formatter based on the core <strong>Render</strong> entity reference formatter that also supports formatting multi-value fields as a list.') . '</dd>';
+  $help .= '<dd>' . t('Settings include all settings from the <strong>Render</strong> formatter, plus those to select a list style and optional list separator, like a comma. List styles include numbered, bulleted, and unbulleted multi-line lists, and a single line list.') . '</dd>';
+
+  $help .= '</dl>';
+
+  // Files.
+  $help .= '<h4>' . t('Formatters for files') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralFileLink"></a>';
+  $help .= '<dt>' . t('General file link') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralFileLink.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any File field.') . '</em></dd>';
+  $help .= '<dd>' . t("Settings select whether to show the file's name, file field description, or custom text as a file link title. The title may include the file's size and a MIME-type-based file icon provided by most themes.") . '</dd>';
+  $help .= '<dd>' . t("Links can be set to cause a browser to open the linked file in a new tab/window or trigger a file download. For search engines, links can be marked using standard semantic values, such as author, help, or license information.") . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  $help .= '</dl>';
+
+  // Images.
+  $help .= '<h4>' . t('Formatters for images') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralImage"></a>';
+  $help .= '<dt>' . t('General image') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralImage.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Image field.') . '</em></dd>';
+  $help .= '<dd>' . t("Settings select the image style to use, whether to include a link to the image file or the parent entity, and an optional caption above or below the image.") . '</dd>';
+  $help .= '<dd>' . t("Links can be set to cause a browser to open the linked item in a new tab/window or trigger a download. Captions can include the title from the image field, the image file name, the file's size, the image's dimensions, and the image's MIME type.") . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="ImageEmbedData"></a>';
+  $help .= '<dt>' . t('Image with embedded data URL') . '</dt>';
+  $image = '<img src="' . $imagePath . 'ImageEmbedData.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Image field.') . '</em></dd>';
+  $help .= '<dd>' . t("This formatter helps when presenting thumbnail images by embeding them directly within the page using a data URL instead of a file URL. This can improve page loading times by reducing the number of files a browser has to request before it can present a page.") . '</dd>';
+  $help .= '<dd>' . t("Settings select the image style to use and whether to include a link to the image file or the parent entity. Additional settings select the maximum image width and height for conversion into a data URL.") . '</dd>';
+
+  $help .= '</dl>';
+
+  // Links.
+  $help .= '<h4>' . t('Formatters for links') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralLink"></a>';
+  $help .= '<dt>' . t('General link') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralLink.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any link field.') . '</em></dd>';
+  $help .= '<dd>' . t("Settings select whether to show the link field's title, URL, or custom text, and how to link to the URL's content.") . '</dd>';
+  $help .= '<dd>' . t("Links can be set to cause a browser to open the linked item in a new tab/window or trigger a download. For search engines, links can be marked using standard semantic values, such as author, help, or license information. When the link field supports external links, 'noreferrer', 'noopener', and 'nofollow' attributes can be added.") . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  $help .= '</dl>';
+
+  // Numeric.
+  $help .= '<h4>' . t('Formatters for numbers') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="NumberWithBytes"></a>';
+  $help .= '<dt>' . t('Bytes with KB/MB/GB suffix') . '</dt>';
+  $image = '<img src="' . $imagePath . 'NumberWithBytes.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Decimal, Float, or Integer field.') . '</em></dd>';
+  $help .= '<dd>' . t('Settings select whether a field\'s numeric values, in bytes, should be summarized using the international standard for <em>Kilobytes</em> (1000 bytes = 1 KB) or legacy <em>Kibibytes</em> (1024 bytes = 1 KiB). Values may be expressed with a specified number of decimal digits, and suffixes may use abbreviations, like "KB", or full words, like "Kilobyte".') . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralNumber"></a>';
+  $help .= '<dt>' . t('General number') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralNumber.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Decimal, Float, or Integer field.') . '</em></dd>';
+  $help .= '<dd>' . t('This formatter presents numeric values in a variety of styles, similar to those available for cells in a spreadsheet.') . '</dd>';
+  $help .= '<ul>';
+  $help .= '<li>' . t('<em>Basic number:</em> Formats numbers using basic settings controlling the number of decimal places and whether a thousands separator (,) is included.') . '</li>';
+  $help .= '<li>' . t('<em>General number:</em> Formats numbers with detailed settings controlling the number of decimal places, the decimal separator, whether a thousands separator is included, the thousands separator, whether to pad with zeroes, the padding width, whether to show the plus sign on positive values, and whether to show the minus sign or parenthesis on negative values.') . '</li>';
+  $help .= '<li>' . t('<em>Numeral system:</em> Formats numbers using a selected base, such as base 2 for binary, 8 for octal, or 16 for hex. Settings control the base and optional zero padding.') . '</li>';
+  $help .= '<li>' . t('<em>Percentage:</em> Formats numbers as percentages by multiplying them by 100 and adding a percentage sign (%). Settings control the number of decimal places and whether a thousands separator (,) is included.') . '</li>';
+  $help .= '<li>' . t('<em>Scientific:</em> Formats numbers using scientific notation and settings controlling the exponent style (E-notation or superscript), the number of decimal places, and whether a thousands separator (,) is included.') . '</li>';
+  $help .= '</ul></dd>';
+  $help .= '<dd>' . t("All general number notation styles support including the field's prefix and suffix before and after the value. The prefix is often used for currency symbols, while the suffix is often used for units of measure.") . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralNumberWithBarIndicator"></a>';
+  $help .= '<dt>' . t('General number with bar indicator') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralNumberWithBarIndicator.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Decimal, Float, or Integer field.') . '</em></dd>';
+  $help .= '<dd>' . t("Settings include all settings from the parent <strong>General number</strong> formatter, plus those to create a colored horizontal bar indicator beside the number. The bar's length varies based upon the field's value and its distance between the field's minimum and maximum values. Formatter settings select a maximum bar length, a bar width, and the bar and background color. The field's value can be shown before or after the bar, or omitted.") . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values and bars side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="GeneralNumberWithMinMax"></a>';
+  $help .= '<dt>' . t('General number with min/max') . '</dt>';
+  $image = '<img src="' . $imagePath . 'GeneralNumberWithMinMax.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Decimal, Float, or Integer field.') . '</em></dd>';
+  $help .= '<dd>' . t('Settings include all settings from the parent <strong>General number</strong> formatter, plus those to show minimum and maximum values for the field. Settings select among common min/max formats, such as "0 &le; 5 &le; 10", "5 out of 10", "5/10", and others. Formatted output also can be customized with a token-like syntax to place the minimum and maximum values along with the field\'s prefix and suffix.') . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values, minima, and maxima side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  $help .= '</dl>';
+
+  // Text.
+  $help .= '<h4>' . t('Formatters for text') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="TextWithExpandCollapseButtons"></a>';
+  $help .= '<dt>' . t('Text with expand/collapse buttons') . '</dt>';
+  $image = '<img src="' . $imagePath . 'TextWithExpandCollapseButtons.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any String long, Text, Text long, or Text with Summary field.') . '</em></dd>';
+  $help .= '<dd>' . t('Settings select how to shorten the presentation of long text blocks. Clicking an expand button lengthens the presentation to the full text,while clicking a collapse button shortens it again. Settings select the shortened text height and the labels for the expand and collapse buttons. Expand and collapse both use a brief animation to slide the area open or closed. The length of that animation, in milliseconds, can be set.') . '</dd>';
+
+  $help .= '</dl>';
+
+  // Timestamp.
+  $help .= '<h4>' . t('Formatters for timestamps') . '</h4>';
+  $help .= '<dl class="formatter_suite-formatter-list">';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="TimestampList"></a>';
+  $help .= '<dt>' . t('Timestamp list') . '</dt>';
+  $image = '<img src="' . $imagePath . 'TimestampList.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Timestamp field, including Created and Changed dates.') . '</em></dd>';
+  $help .= '<dd>' . t('Settings choose the timezone and the name of a date and time format configured for the site.') . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  // -------------------------------------------------------------------.
+  $help .= '<a name="TimestampTimeAgoList"></a>';
+  $help .= '<dt>' . t('Time ago list') . '</dt>';
+  $image = '<img src="' . $imagePath . 'TimestampTimeAgoList.png">';
+  $help .= '<dd><em>' . $image . t('Supports: Any Timestamp field, including Created and Changed dates.') . '</em></dd>';
+  $help .= '<dd>' . t("Settings select the amount of detail to show for the amount of time in the past indicated by a field's value.") . '</dd>';
+  $help .= '<dd>' . t("For multi-value fields, additional settings select whether to show values side-by-side on a single line, or consecutively in numbered, bulleted, or non-bulleted blocks. When shown on a single line, an optional separator may be used.") . '</dd>';
+
+  $help .= '</dl>';
+
+  //
+  // Render element
+  // --------------
+  // Return a render element instead of the HTML string itself. This is
+  // needed in order to include module libraries to style the help page.
+  $page = [
+    '#attached'  => [
+      'library'  => [
+        'formatter_suite/formatter_suite.help',
+      ],
+    ],
+    'page'       => [
+      '#type'    => 'container',
+      '#tree'    => TRUE,
+      '#attributes' => [
+        'class'     => ['formatter_suite-admin-help'],
+      ],
+      'branding' => Branding::getBannerBranding(),
+      'help'     => [
+        '#type'  => 'html_tag',
+        '#tag'   => 'div',
+        '#value' => $help,
+      ],
+    ],
+  ];
+
+  return $page;
+}

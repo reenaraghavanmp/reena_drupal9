@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Handles module installation, uninstallation, and version updates.
+ */
+
+/*----------------------------------------------------------------------
+ *
+ * 0.2.1 to 1.1.0
+ *
+ *----------------------------------------------------------------------*/
+/**
+ * Update field formatters.
+ *
+ * This mandatory update flushes all caches in order to pick up changes
+ * in formatter definitions and templates. Note that some formatters have
+ * been deprecated, though they will still work.
+ */
+function formatter_suite_update_8001() {
+  // This update is intentionally empty. Its effect is to cause all
+  // caches to be flushed.
+  return t('Update complete.');
+}
+
+/*----------------------------------------------------------------------
+ *
+ * 1.2.0 to 1.3.0
+ *
+ *----------------------------------------------------------------------*/
+/**
+ * Update field formatters.
+ *
+ * This mandatory update flushes all caches in order to pick up the
+ * removal of deprecated formatters. Note that some formatters have
+ * been deprecated, though they will still work.
+ */
+function formatter_suite_update_8002() {
+  // This update is intentionally empty. Its effect is to cause all
+  // caches to be flushed.
+  return t('Update complete.');
+}

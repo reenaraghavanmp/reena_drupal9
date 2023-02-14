@@ -1,0 +1,234 @@
+<html>
+<head>
+<title>Formatter Suite Release Notes</title>
+<style>
+h1.formatter_suite_release_notes_title {
+  border-bottom: 2px solid #000;
+  margin-bottom: 0;
+}
+.formatter_suite_release_notes_release h2 {
+  margin-top: 2em;
+  margin-bottom: 0;
+  border-bottom: 1px solid #ccc;
+}
+.formatter_suite_release_notes_section {
+  margin-bottom: 1em;
+  margin-left: 1em;
+}
+.formatter_suite_release_notes_section summary {
+  font-size: 1em;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: -1em;
+  cursor: pointer;
+}
+.formatter_suite_release_notes_section h4 {
+  color: #555;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.formatter_suite_release_notes_section dt {
+  font-style: italic;
+  margin-left: 1em;
+}
+.formatter_suite_release_notes_section dd {
+  margin-left: 2em;
+  margin-bottom: 1em;
+}
+.formatter_suite_release_notes_section ul {
+  margin-left: 0;
+  padding-left: 1em;
+}
+.formatter_suite_release_notes_section li {
+  margin-bottom: 1em;
+}
+.formatter_suite_release_notes_section dl,
+.formatter_suite_release_notes_section ul {
+  margin-top: 0;
+}
+.formatter_suite_release_notes_release p.requires {
+  font-weight: bold;
+  color: #660000;
+}
+.formatter_suite_release_notes_summary {
+  color: #000088;
+}
+</style>
+</head>
+
+<body>
+<h1 class="formatter_suite_release_notes_title">Formatter Suite Release Notes</h1>
+
+<!-- 8.x-1.3.0 -------------------------------------------------------- -->
+<div class="formatter_suite_release_notes_release">
+
+<h2>8.x-1.3.0, 7/17/2020</h2>
+<p class="requires">Requires PHP 7.2+ and Drupal 8.8+</p>
+
+<details class="formatter_suite_release_notes_section">
+<summary>Administrator features</summary>
+<h4>Updates:</h4>
+<dl>
+  <dt>Drupal 8.8 minimum.</dt>
+  <dd>The module now uses new info.yml syntax that requires Drupal 8.8 and later.</dd>
+
+  <dt>Drupal 9 support.</dt>
+  <dd>The module supports Drupal 9. It passes all tests by Drupal Upgrade Rector and Upgrade Status modules used to check for Drupal 9 issues. (see <a href="https://www.drupal.org/project/formatter_suite/issues/3147592">Issue 3147592</a>.)</dd>
+
+  <dt>Include files moved and consolidated</dt>
+  <dd>A legacy organization of include files for help, theme, and update functions has been updated to current style recommendations. This has no functional impact. (see <a href="https://www.drupal.org/project/formatter_suite/issues/3158013">Issue 3158013</a>.)</dd>
+</dl>
+</details>
+
+<details class="formatter_suite_release_notes_section">
+<summary>Formatters</summary>
+<h4>Bugs fixed:</h4>
+<dl>
+  <dt>The "Text with expand/collapse buttons" formatter does not suppress the default button action, which scrolls the page inappropriately.</dt>
+  <dd>Fixed. The default action of these button links is now suppressed. They no longer cause page scrolling. (see <a href="https://www.drupal.org/project/formatter_suite/issues/3048494">Issue 3048494</a>.)</dd>
+
+  <dt>The "Text with expand/collapse buttons" formatter does not translate text for the two buttons.</dt>
+  <dd>Fixed. Language translation tables are built by Drupal.org scanners that look through module code for literal strings. Since text entered by admin for a specific site is not visible to Drupal.org code scanners, it is not automatically added to translation tables. This normally makes such text untranslatable. However, if a site admin manually enters the text in the site's own translation tables, and provides translations, this module's formatter will now pick that up. (see <a href="https://www.drupal.org/project/formatter_suite/issues/3048501">Issue 3048501</a>.)</dd>
+
+  <dt>The "General Number with Bar Indicator" formatter's bars do not work with some themes.</dt>
+  <dd>Fixed. The formatter's bars are images and some theme CSS could interfere with the proper bar width and height. This has been fixed by changing the way bar images are created and by adding module CSS that prevents themes from adding unexpected margins, padding, borders, and shadows.</dd>
+
+  <dt>The "General Number with Bar Indicator" formatter's bars can be exceed the range 0% to 100% of the field.</dt>
+  <dd>Fixed. The math used to calculate the presented bar length did not check for edge cases where a field's value was smaller or larger than the field definition's minimum or maximum. This could produce bar lengths that were negative or excessive.</dd>
+
+  <dt>The "field.html.twig" template in the module is not used.</dt>
+  <dd>Fixed. The extra template file has been removed. This has no functional impact.</dd>
+
+  <dt>Formatter UI inputs for classes, separators, colors, and other technical text should not be spell checked.</dt>
+  <dd>Fixed. Spell checking, autocorrecting, autocompleting, and autocapitalilzing are now disabled for all non-word input fields. This may not work identically for all browsers.</dd>
+
+  <dt>Formatter UIs show some odd layout and styling.</dt>
+  <dd>Fixed. Styling of the UIs has been updated. This remains dependent upon the site's administrator pages theme.</dd>
+
+  <dt>Image formatters do not show default images for fields.</dt>
+  <dd>Fixed. When an entity has an empty image field and a default image is defined, the image is now shown.</dd>
+</dl>
+
+<h4>New features:</h4>
+<dl>
+  <dt>New "General User Reference" formatter for user entity references.</dt>
+  <dd>The formatter shows one or more of the user's account name, display name, ID, last-login date, creation date, email address, etc. Custom text with token replacement can create additional combinations.</dd>
+
+  <dt>Updated "General Entity Reference" to use token replacement.<dt>
+  <dd>The formatter now has more options for showing an entity's title, author, ID, update date, creation date, etc. Custom text with token replacement can create additional combinations.</dd>
+</dl>
+
+<h4>Deprecation:</h4>
+<dl>
+  <dt>The "General Entity Reference List" formatter was been removed.</dd>
+  <dd>The formatter was marked deprecated in version 1.2 in early 2019. It has now been removed. Use "General Entity Reference" instead, which supports the same reference list features.</dd>
+
+  <dt>The "General Email List" and "General Number List" formatters are now marked deprecated.</dt>
+  <dd>These were previously marked with a deprecation warning, but not formally deprecated. They remain in the module but will be removed in the next release. Use "General Email" and "General Number" instead, both of which support the same list features.</dd>
+</dl>
+</details>
+
+</div>
+
+
+
+<!-- 8.x-1.2.0 -------------------------------------------------------- -->
+<div class="formatter_suite_release_notes_release">
+
+<h2>8.x-1.2.0, 3/27/2019</h2>
+<p class="requires">Requires PHP 7.2+ and Drupal 8.7+</p>
+
+<details class="formatter_suite_release_notes_section">
+<summary>Administrator features</summary>
+<h4>Updates:</h4>
+<dl>
+  <dt>UI text and styling updated.</dt>
+  <dd>Minor updates have been made to the UI for all formatters. The updates reduce the UI size and simplify text.</dd>
+
+  <dt>Help updates.</dt>
+  <dd>When the core Help module is enabled, the module's help page has been updated and now includes images of all formatters.</dd>
+
+  <dt>Module dependencies reduced.</dt>
+  <dd>The module now only depends upon the Drupal core Field module. If a site includes the core Datetime, Email, File, Link, Image, and Text modules, then this module's relevant formatters are automatically available.</dd>
+
+</dl>
+</details>
+
+<details class="formatter_suite_release_notes_section">
+<summary>Formatters</summary>
+<h4>Bugs fixed:</h4>
+<dl>
+  <dt>The "General Entity Reference" formatter crashes if the link title is set to an entity ID.</dt>
+  <dd>Fixed. The entity ID is now properly handled.</dd>
+
+  <dt>For formatters showing lists, the item separator is shown even when the list style is bulleted or numbered.</dt>
+  <dd>Fixed. The item separator is only shown between items on the same line.</dd>
+
+</dl>
+
+<h4>New features:</h4>
+<dl>
+  <dt>New "General Link" formatter.</dt>
+  <dd>The formatter works with link fields, showing a link and its title. The formatter supports HTML5 link annotation, including "rel", "target", "download", and the link topic. The formatter also supports special "noreferrer", "noopener", and "nofollow" annotation for search engines and spiders, and values that trigger a link to download or open a new tab.</dd>
+
+  <dt>New "General File Link" formatter.</dt>
+  <dd>The formatter works with file fields, showing a link to the file. The formatter supports a file-relevant subset of the HTML5 link annotation features found in the "General Link" formatter.</dd>
+
+  <dt>New "General Image" formatter.</dt>
+  <dd>The formatter works with image fields, showing an image and link to the image or entity. An image style may be selected to transform the image (e.g. to create a thumbnail). An optional caption can be added above or below the image. The formatter supports a file-relevant subset of the HTML5 link annotation features found in the "General Link" formatter.</dd>
+
+  <dt>The "General Entity Reference" formatter supports link annotation.</dt>
+  <dd>The formatter supports a relevant subset of the HTML5 link annotation features found in the "General Link" formatter.</dd>
+
+  <dt>The "General Entity Reference", "General Email", and "General Number" formatters now support multi-value fields.</dt>
+  <dd>When a field has multiple values, the values are shown in a configurable list that can place values on a single row with a separator (such as a comma), or arrange them as a bullet list, numbered list, or stacked set of &lt;div&gt; blocks.</dd>
+</dl>
+
+<h4>Deprecation:</h4>
+<dl>
+  <dt>The "General Entity Reference List", "General Email List", and "General Number List" formatters are deprecated.</dt>
+  <dd>These formatters are all redundant. The corresponding "General Entity Reference", "General Email", and "General Number" formatters handle value lists themselves. The list-specific formatters will be removed in a future release.</dd>
+</dl>
+</details>
+
+</div>
+
+<!-- 8.x-1.1.0 -------------------------------------------------------- -->
+<div class="formatter_suite_release_notes_release">
+
+<h2>8.x-1.1.0, 11/28/2018</h2>
+<p class="requires">Requires PHP 7.2+ and Drupal 8.7+</p>
+
+<details class="formatter_suite_release_notes_section">
+<summary>Formatters</summary>
+<h4>Bugs fixed:</h4>
+<dl>
+  <dt>The "General Number" formatter shows the ceiling instead of rounding floating point numbers.</dt>
+  <dd>Fixed. Truncated floating-point numbers are now rounded up or down instead of showing the ceiling. (see <a href="https://www.drupal.org/project/formatter_suite/issues/3010979">Issue 3010979</a>.)</dd>
+
+  <dt>The "General Number" formatter shows log entries about an undefined index "numeralBase".</dt>
+  <dd>Fixed. A field name was corrected.</dd>
+
+  <dt>The "Image Embed Data" formatter logs error messages about an invalid theme.</dt>
+  <dd>Fixed. An incorrect theme include was corrected.</dd>
+
+  <dt>Translation calls should be avoided in classes.</dt>
+  <dd>Fixed. Style checker complaints are now addressed. This has no functional impact. (see <a href="https://www.drupal.org/project/formatter_suite/issues/3011438">Issue 3011438</a>.)</dd>
+
+</dl>
+</details>
+
+</div>
+
+<!-- 8.x-1.0  --------------------------------------------------------- -->
+<div class="formatter_suite_release_notes_release">
+<h2>8.x-1.0, 9/24/2018</h2>
+<p>Initial release.</p>
+<p class="requires">Requires PHP 7.2+ and Drupal 8.6+</p>
+
+</div>
+
+</body>
+</html>
+

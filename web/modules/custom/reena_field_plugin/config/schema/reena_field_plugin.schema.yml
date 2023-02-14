@@ -1,0 +1,9 @@
+# Relates to the field_example_color_background formatter plugin.
+# \Drupal\field_example\Plugin\Field\FieldFormatter\ColorBackgroudFormatter.
+field.formatter.settings.magictext_formatter:
+  type: mapping
+  label: Background color formatter settings
+  mapping:
+    adjust_text_color:
+      type: boolean
+      label: Automatically adjust foreground text color based on background color lightness.

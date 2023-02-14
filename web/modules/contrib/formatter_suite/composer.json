@@ -1,0 +1,20 @@
+{
+  "name":              "drupal/formatter_suite",
+  "description":       "Field formaters to present numbers, text, links, etc.",
+  "type":              "drupal-module",
+  "keywords":          ["Drupal", "Format"],
+  "homepage":          "https://www.drupal.org/project/formatter_suite",
+  "license":           "GPL-2.0-or-later",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "http://drupal.org/project/issues/formatter_suite",
+    "source": "http://cgit.drupalcode.org/formatter_suite"
+  },
+  "repositories": [
+    {
+      "type":  "composer",
+      "url":   "https://packages.drupal.org/8"
+    }
+  ],
+  "require": { }
+}
