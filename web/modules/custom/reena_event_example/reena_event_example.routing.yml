@@ -1,0 +1,8 @@
+reena_event_example.event_example_form:
+  path: '/form'
+  defaults:
+    _form: '\Drupal\reena_event_example\Form\EventExampleForm'
+    _title: 'Event Example Form'
+  requirements:
+    _permission: 'access content'
+    _access: 'TRUE'

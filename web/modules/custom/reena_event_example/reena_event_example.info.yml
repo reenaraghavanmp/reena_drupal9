@@ -1,0 +1,5 @@
+name: Reena Event Example
+type: module
+description:  Reena Event Example Custom module
+core_version_requirement: ^8 || ^9 || ^10
+package: custom
