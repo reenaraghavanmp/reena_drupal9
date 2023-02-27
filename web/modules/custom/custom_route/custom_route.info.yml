@@ -1,5 +1,0 @@
-name: Custom route
-type: module
-description: Routing
-core_version_requirement: ^8 || ^9 || ^10
-package: custom

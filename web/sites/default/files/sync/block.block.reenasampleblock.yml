@@ -1,0 +1,25 @@
+uuid: 9f7fdb0e-f8a9-487c-8039-3c2817d59df3
+langcode: en
+status: true
+dependencies:
+  module:
+    - reena_sample_block
+    - system
+  theme:
+    - olivero
+id: reenasampleblock
+theme: olivero
+region: sidebar
+weight: 0
+provider: null
+plugin: reena_sample_block
+settings:
+  id: reena_sample_block
+  label: 'Reena Sample Block'
+  label_display: visible
+  provider: reena_sample_block
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '<front>'

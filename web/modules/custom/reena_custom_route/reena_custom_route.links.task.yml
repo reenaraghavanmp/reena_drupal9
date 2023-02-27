@@ -1,0 +1,6 @@
+reena_custom_route.tab1:
+  title: 'Tab1'
+  route_name: 'reena_custom_route.content'
+  base_route: 'system.admin_content'
+  weight: 10
+

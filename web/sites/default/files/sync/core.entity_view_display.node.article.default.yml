@@ -55,7 +55,9 @@ content:
   field_magic_text:
     type: magictext_formatter
     label: above
-    settings: {  }
+    settings:
+      adjust_text_color: true
+      change_background_color: red
     third_party_settings: {  }
     weight: 6
     region: content
